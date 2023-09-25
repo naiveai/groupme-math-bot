@@ -1,14 +1,12 @@
 {
   "name": "groupme_math_bot",
-  "module": "index.ts",
-  "type": "module",
-  "devDependencies": {
-    "bun-types": "latest"
-  },
+  "module": "index.js",
+  "type": "commonjs",
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@google-cloud/functions-framework": "^3.3.0",
     "mathjax": "^3.2.2"
   }
 }
