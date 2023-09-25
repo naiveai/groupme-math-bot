@@ -32,6 +32,10 @@ functions.http("mathRenderer", async (req, res) => {
             attachments: [{
                 type: "image",
                 url: groupme_image_url
+            }, {
+                type: "reply",
+                reply_id: req.body.id,
+                base_reply_id: req.body.id
             }]
         })
     });
