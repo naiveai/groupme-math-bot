@@ -1,6 +1,5 @@
 import functions from "@google-cloud/functions-framework";
-import convertPkg from "convert-svg-to-png";
-const { convert } = convertPkg;
+import sharp from "sharp";
 
 const mathRegex = /`(?<expression>.*?)`/g;
 const MathJax = await (await import("mathjax")).init({
@@ -8,6 +7,11 @@ const MathJax = await (await import("mathjax")).init({
         load: ['input/asciimath', 'output/svg']
     }
 });
+
+const lerp = (x, y, a) => x * (1 - a) + y * a;
+const clamp = (a, min = 0, max = 1) => Math.min(max, Math.max(min, a));
+const invlerp = (x, y, a) => clamp((a - x) / (y - x));
+const range = (x1, y1, x2, y2, a) => lerp(x2, y2, invlerp(x1, y1, a));
 
 functions.http("mathRenderer", async (req, res) => {
     const message = req.body.text;
@@ -18,14 +22,20 @@ functions.http("mathRenderer", async (req, res) => {
         return;
     }
 
-    let renderedPngs = [];
+    const imageUrls = await Promise.all(mathExpressions.map(async (mathExpression) => {
+        const renderedSvg = MathJax.startup.adaptor.innerHTML(MathJax.asciimath2svg(mathExpression));
 
-    for (const mathExpression of mathExpressions) {
-        const renderedSvg = MathJax.asciimath2svg(mathExpression);
-        renderedPngs.push(await convert(MathJax.startup.adaptor.innerHTML(renderedSvg), { scale: 10 }));
-    }
+        const density = range(0, 50, 120, 200, mathExpression.length);
+        const renderedPng = await sharp(Buffer.from(renderedSvg), { density })
+            .png()
+            // Remove transparency (so it'll render visibly on GroupMe in dark mode)
+            .flatten({ background: "#FFFFFF" })
+            // Add some padding so the equation isn't right up against the edge of the image
+            .extend({ top: 10, bottom: 10, left: 10, right: 10, background: "#FFFFFF" })
+            .toBuffer();
 
-    const imageUrls = await Promise.all(renderedPngs.map(groupmeUploadImage));
+        return groupmeUploadImage(renderedPng);
+    }));
 
     // We send these sequentially because it's easier for the users to see
     // equations in the order they're seen in the message.
