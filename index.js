@@ -22,9 +22,7 @@ functions.http("mathRenderer", async (req, res) => {
     const groupme_response_json = await groupme_response.json();
     const groupme_image_url = groupme_response_json.payload.picture_url;
 
-    console.log(groupme_image_url);
-
-    const resp = await fetch("https://api.groupme.com/v3/bots/post", {
+    await fetch("https://api.groupme.com/v3/bots/post", {
         method: "POST",
         body: JSON.stringify({
             bot_id: process.env.GROUPME_BOT_ID,
@@ -39,9 +37,6 @@ functions.http("mathRenderer", async (req, res) => {
             }]
         })
     });
-
-    console.log(resp);
-    console.log(await resp.json());
 
     res.sendStatus(200);
 });
