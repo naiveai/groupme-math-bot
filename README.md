@@ -14,7 +14,7 @@ merely allows me to add the bot, a separate user, to your group. The way the
 GroupMe API works, I can't send messages on your behalf even if I wanted to.
 
 The bot renders any expression it finds between two at signs (`@`) or backticks
-(`\``) using AsciiMath, a simplified math typesetting option that allows for
+(`` ` ``) using AsciiMath, a simplified math typesetting option that allows for
 complex expressions to be written in a more mobile-friendly and intuitive way
 than LaTeX. In general, most math expressions are written very similar to how
 they look, with `^` for superscripts and `_` for subscripts being enough to
