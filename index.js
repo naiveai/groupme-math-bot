@@ -7,6 +7,7 @@ const MathJax = await (await import("mathjax")).init({
         load: ['input/asciimath', 'output/svg']
     }
 });
+const svgStylesheet = MathJax.svgStylesheet();
 
 const lerp = (x, y, a) => x * (1 - a) + y * a;
 const clamp = (a, min = 0, max = 1) => Math.min(max, Math.max(min, a));
@@ -23,10 +24,17 @@ functions.http("mathRenderer", async (req, res) => {
     }
 
     const imageUrls = await Promise.all(mathExpressions.map(async (mathExpression) => {
-        const renderedSvg = MathJax.startup.adaptor.innerHTML(MathJax.asciimath2svg(mathExpression));
+        let svg = MathJax.asciimath2svg(mathExpression);
+
+        // The actual SVG element is the first child of the MathML container,
+        // and we need to add a stylesheet *inside* it for certain specifics
+        // to render correctly, e.g. augmented matrices.
+        svg.children[0].children.push(svgStylesheet);
+
+        const innerSvg = MathJax.startup.adaptor.innerHTML(svg);
 
         const density = range(0, 50, 120, 200, mathExpression.length);
-        const renderedPng = await sharp(Buffer.from(renderedSvg), { density })
+        const renderedPng = await sharp(Buffer.from(innerSvg), { density })
             .png()
             // Remove transparency (so it'll render visibly on GroupMe in dark mode)
             .flatten({ background: "#FFFFFF" })
