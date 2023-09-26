@@ -42,7 +42,7 @@ functions.http("mathRenderer", async (req, res) => {
             .extend({ top: 10, bottom: 10, left: 10, right: 10, background: "#FFFFFF" })
             .toBuffer();
 
-        return groupmeUploadImage(renderedPng);
+        return groupmeUploadImage(renderedPng, req.body.token);
     }));
 
     // We send these sequentially because it's easier for the users to see
@@ -64,7 +64,7 @@ functions.http("mathRenderer", async (req, res) => {
         }
 
         const body = JSON.stringify({
-            bot_id: process.env.GROUPME_BOT_ID,
+            bot_id: req.body.bot_id,
             text: "",
             attachments
         });
@@ -75,11 +75,11 @@ functions.http("mathRenderer", async (req, res) => {
     res.sendStatus(200);
 });
 
-async function groupmeUploadImage(image) {
+async function groupmeUploadImage(image, token) {
     const groupme_response = await fetch("https://image.groupme.com/pictures", {
         method: "POST",
         headers: {
-            "X-Access-Token": process.env.GROUPME_TOKEN,
+            "X-Access-Token": token,
             "Content-Type": "image/png"
         },
         body: image
