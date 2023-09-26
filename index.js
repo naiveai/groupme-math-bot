@@ -20,12 +20,12 @@ functions.http("mathRenderer", async (req, res) => {
 
     let renderedPngs = [];
 
-    for (let mathExpression of mathExpressions) {
+    for (const mathExpression of mathExpressions) {
         const rendered_svg = MathJax.asciimath2svg(mathExpression);
         renderedPngs.push(await convert(MathJax.startup.adaptor.innerHTML(rendered_svg), { scale: 10 }));
     }
 
-    await Promise.all(renderedPngs.map(async (renderedPng) => {
+    const imageUrls = await Promise.all(renderedPngs.map(async (renderedPng) => {
         const groupme_response = await fetch("https://image.groupme.com/pictures", {
             method: "POST",
             headers: {
@@ -36,22 +36,36 @@ functions.http("mathRenderer", async (req, res) => {
         });
         const groupme_response_json = await groupme_response.json();
 
+        return groupme_response_json.payload.picture_url;
+    }));
+
+    // We send these sequentially because it's easier for the users to see
+    // equations in the order they're seen in the message.
+    for (const [index, imageUrl] of imageUrls.entries()) {
+        let attachments = [{
+            type: "image",
+            url: imageUrl
+        }];
+
+        if (index === 0) {
+            // If and only if this is the first image, we want to show context
+            // by replying to the original message. Repeated replies are clutter.
+            attachments.push({
+                type: "reply",
+                reply_id: req.body.id,
+                base_reply_id: req.body.id
+            });
+        }
+
         await fetch("https://api.groupme.com/v3/bots/post", {
             method: "POST",
             body: JSON.stringify({
                 bot_id: process.env.GROUPME_BOT_ID,
                 text: "",
-                attachments: [{
-                    type: "image",
-                    url: groupme_response_json.payload.picture_url
-                }, {
-                    type: "reply",
-                    reply_id: req.body.id,
-                    base_reply_id: req.body.id
-                }]
+                attachments
             })
         });
-    }));
+    }
 
     res.sendStatus(200);
 });
