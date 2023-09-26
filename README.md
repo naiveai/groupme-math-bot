@@ -1,6 +1,6 @@
 # GroupMe AsciiMath Bot
 
-![![public domain](http://i.creativecommons.org/p/zero/1.0/88x31.png)](http://creativecommons.org/publicdomain/zero/1.0/)
+[![public domain](http://i.creativecommons.org/p/zero/1.0/88x31.png)](http://creativecommons.org/publicdomain/zero/1.0/)
 
 I'm in a few math study group chats in GroupMe and the lack of math rendering
 sometimes makes things difficult, especially when talking about complex
@@ -33,7 +33,7 @@ Integrals:
 
 Multiple equations (and limits):
 
-![multiple equations and limits)[https://i.imgur.com/mCprk93.png]
+![multiple equations and limits](https://i.imgur.com/mCprk93.png)
 
 ## Details
 
