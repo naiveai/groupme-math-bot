@@ -1,7 +1,13 @@
-const functions = require("@google-cloud/functions-framework");
-const { convert } = require("convert-svg-to-png");
+import functions from "@google-cloud/functions-framework";
+import convertPkg from "convert-svg-to-png";
+const { convert } = convertPkg;
 
 const mathRegex = /`(?<expression>.*?)`/g;
+const MathJax = await (await import("mathjax")).init({
+    loader: {
+        load: ['input/asciimath', 'output/svg']
+    }
+});
 
 functions.http("mathRenderer", async (req, res) => {
     const message = req.body.text;
@@ -12,44 +18,26 @@ functions.http("mathRenderer", async (req, res) => {
         return;
     }
 
-    const MathJax = await require("mathjax").init({
-        loader: {
-            load: ['input/asciimath', 'output/svg']
-        }
-    });
-
     let renderedPngs = [];
 
     for (const mathExpression of mathExpressions) {
-        const rendered_svg = MathJax.asciimath2svg(mathExpression);
-        renderedPngs.push(await convert(MathJax.startup.adaptor.innerHTML(rendered_svg), { scale: 10 }));
+        const renderedSvg = MathJax.asciimath2svg(mathExpression);
+        renderedPngs.push(await convert(MathJax.startup.adaptor.innerHTML(renderedSvg), { scale: 10 }));
     }
 
-    const imageUrls = await Promise.all(renderedPngs.map(async (renderedPng) => {
-        const groupme_response = await fetch("https://image.groupme.com/pictures", {
-            method: "POST",
-            headers: {
-                "X-Access-Token": process.env.GROUPME_TOKEN,
-                "Content-Type": "image/png"
-            },
-            body: renderedPng
-        });
-        const groupme_response_json = await groupme_response.json();
-
-        return groupme_response_json.payload.picture_url;
-    }));
+    const imageUrls = await Promise.all(renderedPngs.map(groupmeUploadImage));
 
     // We send these sequentially because it's easier for the users to see
     // equations in the order they're seen in the message.
     for (const [index, imageUrl] of imageUrls.entries()) {
-        let attachments = [{
+        const attachments = [{
             type: "image",
             url: imageUrl
         }];
 
+        // If and only if this is the first image, we want to show context
+        // by replying to the original message. Repeated replies are clutter.
         if (index === 0) {
-            // If and only if this is the first image, we want to show context
-            // by replying to the original message. Repeated replies are clutter.
             attachments.push({
                 type: "reply",
                 reply_id: req.body.id,
@@ -57,15 +45,28 @@ functions.http("mathRenderer", async (req, res) => {
             });
         }
 
-        await fetch("https://api.groupme.com/v3/bots/post", {
-            method: "POST",
-            body: JSON.stringify({
-                bot_id: process.env.GROUPME_BOT_ID,
-                text: "",
-                attachments
-            })
+        const body = JSON.stringify({
+            bot_id: process.env.GROUPME_BOT_ID,
+            text: "",
+            attachments
         });
+
+        await fetch("https://api.groupme.com/v3/bots/post", { method: "POST", body });
     }
 
     res.sendStatus(200);
 });
+
+async function groupmeUploadImage(image) {
+    const groupme_response = await fetch("https://image.groupme.com/pictures", {
+        method: "POST",
+        headers: {
+            "X-Access-Token": process.env.GROUPME_TOKEN,
+            "Content-Type": "image/png"
+        },
+        body: image
+    });
+    const groupme_response_json = await groupme_response.json();
+
+    return groupme_response_json.payload.picture_url;
+}

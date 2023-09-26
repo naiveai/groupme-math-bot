@@ -1,7 +1,7 @@
 {
   "name": "groupme_math_bot",
   "module": "index.js",
-  "type": "commonjs",
+  "type": "module",
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
