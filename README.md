@@ -4,7 +4,7 @@
 
 I'm in a few math study group chats in GroupMe and the lack of math rendering
 sometimes makes things difficult, especially when talking about complex
-expressions involving matrices, integrals, and other complex expressions.
+expressions involving matrices, integrals, long fractions, etc.
 Taking photos of the textbook or your own written solutions is prone to
 misinterpretation and is all around a hassle anyway.
 
