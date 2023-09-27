@@ -42,7 +42,7 @@ functions.http("mathRenderer", async (req, res) => {
             .extend({ top: 10, bottom: 10, left: 10, right: 10, background: "#FFFFFF" })
             .toBuffer();
 
-        return groupmeUploadImage(renderedPng, req.body.token);
+        return groupmeUploadImage(renderedPng, process.env.GROUPME_TOKEN);
     }));
 
     // We send these sequentially because it's easier for the users to see
