@@ -1,5 +1,6 @@
 import functions from "@google-cloud/functions-framework";
 import sharp from "sharp";
+import { unfancy } from "string-unfancy";
 
 const mathRegex = /(`|@)(?<expression>.*?)\1/gis;
 const MathJax = await (await import("mathjax")).init({
@@ -24,7 +25,11 @@ functions.http("mathRenderer", async (req, res) => {
     }
 
     const imageUrls = await Promise.all(mathExpressions.map(async (mathExpression) => {
-        let svg = MathJax.asciimath2svg(mathExpression);
+        // Replace some unicode characrters with their ASCII equivalents if they
+        // have one, like fancy quotes or dashes, as they can cause issues.
+        const asciiMathExpression = unfancy(mathExpression);
+
+        let svg = MathJax.asciimath2svg(asciiMathExpression);
 
         // The actual SVG element is the first child of the MathML container,
         // and we need to add a stylesheet *inside* it for certain specifics
@@ -33,7 +38,7 @@ functions.http("mathRenderer", async (req, res) => {
 
         const innerSvg = MathJax.startup.adaptor.innerHTML(svg);
 
-        const density = range(0, 50, 120, 200, mathExpression.length);
+        const density = range(0, 50, 120, 200, asciiMathExpression.length);
         const renderedPng = await sharp(Buffer.from(innerSvg), { density })
             .png()
             // Remove transparency (so it'll render visibly on GroupMe in dark mode)
