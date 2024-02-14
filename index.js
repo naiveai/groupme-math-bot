@@ -2,7 +2,7 @@ import functions from "@google-cloud/functions-framework";
 import sharp from "sharp";
 import { unfancy } from "string-unfancy";
 
-const mathRegex = /(`|@)(?<expression>.*?)\1/gis;
+const mathRegex = /(`|@@)(?<expression>.*?)\1/gis;
 const MathJax = await (await import("mathjax")).init({
     loader: {
         load: ['input/asciimath', 'output/svg']
